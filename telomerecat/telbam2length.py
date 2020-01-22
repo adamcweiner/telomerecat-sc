@@ -901,7 +901,7 @@ class Telbam2Length(TelomerecatInterface):
                         telbams_paths.append(line.strip())
         else:  # input is already a list of telbam paths
             telbams_paths = self.cmd_args.input
-
+        print telbam_paths
         self.run(input_paths=telbams_paths,
                  trim=self.cmd_args.trim,
                  output_path=self.cmd_args.output,
