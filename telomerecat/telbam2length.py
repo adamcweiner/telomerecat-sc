@@ -893,7 +893,16 @@ class Telbam2Length(TelomerecatInterface):
             cmd_run=cmd_run)
 
     def run_cmd(self):
-        self.run(input_paths=self.cmd_args.input,
+        if self.cmd_args.file_input:  # input is txt files containing telbam paths
+            telbams_paths = []
+            for file in self.cmd_args.input:
+                with open(file, 'rb') as f:
+                    for line in f:
+                        telbams_paths.append(line.strip())
+        else:  # input is already a list of telbam paths
+            telbams_paths = self.cmd_args.input
+
+        self.run(input_paths=telbams_paths,
                  trim=self.cmd_args.trim,
                  output_path=self.cmd_args.output,
                  simulator_n=self.cmd_args.simulator_runs,
@@ -1086,6 +1095,11 @@ class Telbam2Length(TelomerecatInterface):
         parser.add_argument(
             'input', metavar='TELBAM(S)', nargs='+',
             help="The TELBAM(s) that we wish to analyse")
+        # file_input
+        parser.add_argument(
+            '-i', '--file_input', action="store_true", default=False,
+            help="Specify whether the input file is a telbam or a txt file\n"
+                    "that contains one telbam file per row")
         parser.add_argument(
             '--output', metavar='CSV', type=str, nargs='?', default=None,
             help=('Specify output path for length estimation CSV.\n'
