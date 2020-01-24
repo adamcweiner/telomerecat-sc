@@ -963,10 +963,12 @@ class Telbam2Length(TelomerecatInterface):
                                                        self.total_procs,
                                                        trim)
 
-            self.__write_to_csv__(read_type_counts,
-                                    vital_stats,
-                                    temp_csv_path,
-                                    sample_name)
+            # only include sample in temporary csv when insert_sd is non-zero
+            if vital_stats["insert_sd"] > 0:
+                self.__write_to_csv__(read_type_counts,
+                                        vital_stats,
+                                        temp_csv_path,
+                                        sample_name)
         
         self.__output__("\n", 1)
         length_interface = Csv2Length(temp_dir=self.temp_dir,
