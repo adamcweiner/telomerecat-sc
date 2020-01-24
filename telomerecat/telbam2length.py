@@ -1002,19 +1002,16 @@ class Telbam2Length(TelomerecatInterface):
                                           inserts_path,
                                           insert_length_generator,
                                           vital_stats):
-        default_mean, default_sd = 350, 25
+
         if inserts_path:
             insert_mean, insert_sd = insert_length_generator.next()
-            if insert_mean <= 0:  # replace mean and sd with defaults if insert_length_generator gives odd value
-                insert_mean = default_mean
-            if insert_sd <= 0:
-                insert_sd = default_sd
             vital_stats["insert_mean"] = insert_mean
             vital_stats["insert_sd"] = insert_sd
             self.__output__(
                 "\t\t+ Using user defined insert size: %d,%d\n"
                 % (insert_mean, insert_sd), 2)
         elif vital_stats["insert_mean"] == -1:
+            default_mean, default_sd = 350, 25
             vital_stats["insert_mean"] = default_mean
             vital_stats["insert_sd"] = default_sd
             self.__output__(
