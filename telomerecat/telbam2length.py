@@ -964,8 +964,8 @@ class Telbam2Length(TelomerecatInterface):
                                                        trim)
 
             # only include sample in temporary csv when insert_sd is non-zero
-            if vital_stats["insert_sd"] > 0:
-                self.__write_to_csv__(read_type_counts,
+            # if vital_stats["insert_sd"] > 0:
+            self.__write_to_csv__(read_type_counts,
                                         vital_stats,
                                         temp_csv_path,
                                         sample_name)
