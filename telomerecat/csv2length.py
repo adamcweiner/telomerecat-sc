@@ -235,8 +235,7 @@ class Csv2Length(core.TelomerecatInterface):
 
     def __get_corrected_f2a__(self, counts, prior_weight=3):
 
-        # TODO: try just adding 1E-5 or something small to denominator here so that 0/0 = NaN turns into 0/1E-5 = 0
-        theta_observed = counts["F2a"] / (counts["F2"] + counts["F4"] + np.finfo(float).eps)  # currently getting NaN for all F2a_c values whenever one case has F2+F4=0
+        theta_observed = counts["F2a"] / (counts["F2"] + counts["F4"] + np.finfo(float).eps)  # include very small float eps so that 0/0 = NaN turns into 0/eps = 0
 
         prior_weight = 3
         theta_expected = sum(theta_observed * counts["F2"]) / sum(counts["F2"])
