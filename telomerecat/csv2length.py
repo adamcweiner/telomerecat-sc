@@ -265,20 +265,20 @@ class Csv2Length(core.TelomerecatInterface):
             sample_intro = "\t- %s | %s\n" % (sample["Sample"],
                                               self.__get_date_time__())
             self.__output__(sample_intro, 2)
-            if sample["Insert_sd"] > 0:
-                try:
-                    length_mean, len_std = run_simulator_par(
-                        sample["Insert_mean"],
-                        sample["Insert_sd"],
-                        sample["F1"],
-                        sample["F2a_c"],
-                        self.total_procs,
-                        sample["Read_length"],
-                        simulator_n)
-                except:
-                    length_mean = "N/A"
-            else:
+            # if sample["Insert_sd"] > 0:
+            try:
+                length_mean, len_std = run_simulator_par(
+                    sample["Insert_mean"],
+                    sample["Insert_sd"],
+                    sample["F1"],
+                    sample["F2a_c"],
+                    self.total_procs,
+                    sample["Read_length"],
+                    simulator_n)
+            except:
                 length_mean = "N/A"
+            # else:
+            #     length_mean = "N/A"
 
             lengths.append(length_mean)
         return lengths
