@@ -277,7 +277,7 @@ class Csv2Length(core.TelomerecatInterface):
                     sample["Read_length"],
                     simulator_n)
             else:
-                length_mean = np.nan
+                length_mean = "NA"
 
             lengths.append(length_mean)
         return lengths
