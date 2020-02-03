@@ -544,8 +544,6 @@ class ReadStatsFactory(object):
 
     def get_read_counts(self, path, vital_stats):
         read_stat_paths = self.run_read_stat_rule(path, vital_stats)
-        print "read_stat_paths:"
-        print read_stat_paths
 
         read_array = self.__path_to_read_array__(read_stat_paths["read_array"])
 
