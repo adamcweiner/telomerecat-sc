@@ -547,6 +547,8 @@ class ReadStatsFactory(object):
 
         read_array = self.__path_to_read_array__(read_stat_paths["read_array"])
 
+        # TODO: take error profile as a function input instead of building it from the reads input
+        # do this so that error profile can be built globally instead of just for one given cell/clone
         error_profile, sample_variance = \
                     self.__paths_to_error_profile__(read_stat_paths)
 
@@ -946,6 +948,8 @@ class Telbam2Length(TelomerecatInterface):
                                               self.task_size,
                                               trim)
 
+        # TODO: find global error profile here before finding read_type_counts in loop below
+
         for sample_path, sample_name, in izip(input_paths, names):
             sample_intro = "\t- %s | %s\n" % (sample_name,
                                               self.__get_date_time__())
@@ -1027,7 +1031,11 @@ class Telbam2Length(TelomerecatInterface):
                                                   total_procs=total_procs,
                                                   trim_reads=trim,
                                                   debug_print=False)
-            
+        
+        # TODO: build error profile with different sample_path object containing a pseudobulk (all telbams)
+        # then pass that error profile into get_read_counts() as an argument.
+        # TODO: error_profile should be an argument for __get_read_types__() as well so that global error
+        # profile is only build once.
         read_type_counts = read_stats_factory.get_read_counts(sample_path,
                                                               vital_stats)
         return read_type_counts
