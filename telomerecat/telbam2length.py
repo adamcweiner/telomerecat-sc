@@ -939,11 +939,12 @@ class Telbam2Length(TelomerecatInterface):
            program which creates a telbam from a bam
 
         Arguments:
-            inputs_paths (list): The TELBAMs that we wish to estimate TL estimates for
+            inputs_paths (list): The TELBAMs that we wish to estimate TL for
             output_path (string): Specify a path to output results to (optional)
             inserts_path (string): A path to a file containing insert length estimates
                                    for each TELBAM. Formatted as follows:
                                         example_telbam.bam, insert_mean, insert_sd
+            bulk_path (string): A path to a specified pseudobulk telbam (optional)
         """
 
         self.__introduce__()
@@ -969,18 +970,22 @@ class Telbam2Length(TelomerecatInterface):
         # 2) use pysam to build pseudobulk on the spot here
         # currently using option 1
 
-        # find global error profile here before finding read_type_counts in loop below
-        vital_stats = vital_stats_finder.get_vital_stats(bulk_path)
-        # TODO: do I need to call self.__check_vital_stats_insert_size__() here?
-        self.__check_vital_stats_insert_size__(inserts_path,
-                                               insert_length_generator,
-                                               vital_stats)
-        global_error_profile, global_sample_variance = self.__get_global_error_and_variance__(bulk_path,
-                                                                                              vital_stats,
-                                                                                              self.total_procs,
-                                                                                              trim)
-        
+        # find global error profile when pseudobulk telbam path is provided
+        if bulk_path is not None:
+            vital_stats = vital_stats_finder.get_vital_stats(bulk_path)
+            # TODO: do I need to call self.__check_vital_stats_insert_size__() here?
+            self.__check_vital_stats_insert_size__(inserts_path,
+                                                   insert_length_generator,
+                                                   vital_stats)
+            global_error_profile, global_sample_variance = self.__get_global_error_and_variance__(bulk_path,
+                                                                                                  vital_stats,
+                                                                                                  self.total_procs,
+                                                                                                  trim)
+        else:  # set error params to None so they get calculated on a per-telbam basis in __get_read_types__()
+            global_error_profile = None
+            global_sample_variance = None
 
+        # write read_type_counts to temp csv for each telbam
         for sample_path, sample_name, in izip(input_paths, names):
             sample_intro = "\t- %s | %s\n" % (sample_name,
                                               self.__get_date_time__())
