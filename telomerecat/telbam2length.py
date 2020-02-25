@@ -561,8 +561,8 @@ class ReadStatsFactory(object):
         return read_counts
 
     # TODO: make sure this function works properly
-    def get_global_error_and_variance(self, pseudobulk_path, vital_stats):
-        read_stat_paths = self.run_read_stat_rule(pseudobulk_path, vital_stats)
+    def get_global_error_and_variance(self, bulk_path, vital_stats):
+        read_stat_paths = self.run_read_stat_rule(bulk_path, vital_stats)
         read_array = self.__path_to_read_array__(read_stat_paths["read_array"])
         error_profile, sample_variance = \
                         self.__paths_to_error_profile__(read_stat_paths)
@@ -1075,10 +1075,10 @@ class Telbam2Length(TelomerecatInterface):
 
     # TODO: make sure this function works
     def __get_global_error_and_variance__(self, sample_path,
-                                 vital_stats,
-                                 total_procs,
-                                 trim,
-                                 read_stats_factory=None):
+                                                vital_stats,
+                                                total_procs,
+                                                trim,
+                                                read_stats_factory=None):
         if read_stats_factory is None:
             read_stats_factory = ReadStatsFactory(temp_dir=self.temp_dir,
                                                   total_procs=total_procs,
@@ -1156,7 +1156,6 @@ class Telbam2Length(TelomerecatInterface):
         parser.add_argument(
             'input', metavar='TELBAM(S)', nargs='+',
             help="The TELBAM(s) that we wish to analyse")
-        # file_input
         parser.add_argument(
             '-i', '--file_input', action="store_true", default=False,
             help="Specify whether the input file is a telbam or a txt file\n"
