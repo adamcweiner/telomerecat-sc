@@ -988,7 +988,8 @@ class Telbam2Length(TelomerecatInterface):
                                                              vital_stats,
                                                              self.total_procs,
                                                              trim)
-        else:  # set error params to None so they get calculated on a per-telbam basis in __get_read_types__()
+        # set global_error_profile to None so its get calculated on a per-telbam basis in __get_read_types__()
+        else:
             global_error_profile = None
 
         # write read_type_counts to temp csv for each telbam
@@ -1001,8 +1002,8 @@ class Telbam2Length(TelomerecatInterface):
             vital_stats = vital_stats_finder.get_vital_stats(sample_path)
 
             self.__check_vital_stats_insert_size__(inserts_path,
-                                                    insert_length_generator,
-                                                    vital_stats)
+                                                   insert_length_generator,
+                                                   vital_stats)
 
             read_type_counts = self.__get_read_types__(sample_path,
                                                        vital_stats,
