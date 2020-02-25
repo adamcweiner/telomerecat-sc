@@ -547,8 +547,8 @@ class ReadStatsFactory(object):
 
         read_array = self.__path_to_read_array__(read_stat_paths["read_array"])
 
-        # TODO: only build error profile & variance if not input into the function
-        if error_profile is None and sample_variance is None:
+        # TODO: only build error profile or variance if not input into the function
+        if error_profile is None or sample_variance is None:
             error_profile, sample_variance = \
                         self.__paths_to_error_profile__(read_stat_paths)
 
