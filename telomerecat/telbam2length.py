@@ -913,19 +913,27 @@ class Telbam2Length(TelomerecatInterface):
         else:  # input is already a list of telbam paths
             telbams_paths = self.cmd_args.input
 
+        # add pseudobulk to list of telbam_paths if specified
+        # this means that telomere length is estimated for bulk
+        # take this line out if runtime takes too long
+        if self.cmd_args.pseudobulk is not None:
+            telbams_paths.append(self.cmd_args.pseudobulk)
+
         self.run(input_paths=telbams_paths,
                  trim=self.cmd_args.trim,
                  output_path=self.cmd_args.output,
                  simulator_n=self.cmd_args.simulator_runs,
                  correct_f2a=self.cmd_args.enable_correction,
-                 inserts_path=self.cmd_args.insert)
+                 inserts_path=self.cmd_args.insert,
+                 bulk_path=self.cmd_args.pseudobulk)
 
     def run(self, input_paths,
                   trim=0,
                   output_path=None,
                   correct_f2a=False,
                   simulator_n=10,
-                  inserts_path=None):
+                  inserts_path=None,
+                  bulk_path=None):
         
         """The main function for invoking the part of the
            program which creates a telbam from a bam
@@ -959,11 +967,14 @@ class Telbam2Length(TelomerecatInterface):
         # TODO: build pseudobulk that merges all telbams in input_paths
         # 1) have pseudobulk telbam be a command line argument
         # 2) use pysam to build pseudobulk on the spot here
-        # bulk_path = ?
+        # currently using option 1
 
         # find global error profile here before finding read_type_counts in loop below
         vital_stats = vital_stats_finder.get_vital_stats(bulk_path)
         # TODO: do I need to call self.__check_vital_stats_insert_size__() here?
+        self.__check_vital_stats_insert_size__(inserts_path,
+                                               insert_length_generator,
+                                               vital_stats)
         global_error_profile, global_sample_variance = self.__get_global_error_and_variance__(bulk_path,
                                                                                               vital_stats,
                                                                                               self.total_procs,
@@ -1150,6 +1161,12 @@ class Telbam2Length(TelomerecatInterface):
             '-i', '--file_input', action="store_true", default=False,
             help="Specify whether the input file is a telbam or a txt file\n"
                     "that contains one telbam file per row")
+        parser.add_argument(
+            '-b', '--pseudobulk', metavar='TELBAM', type="str", nargs='?', default=None,
+            help="Path to pseudobulk telbam that gets used to create a bulk error\n"
+                    "profile and sample variance that is used to categorize\n"
+                    "read types for all cells. A telomere length estimate will\n"
+                    "be given for this pseudobulk telbam too. [Default: None]")
         parser.add_argument(
             '--output', metavar='CSV', type=str, nargs='?', default=None,
             help=('Specify output path for length estimation CSV.\n'
