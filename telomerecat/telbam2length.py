@@ -566,6 +566,7 @@ class ReadStatsFactory(object):
         read_array = self.__path_to_read_array__(read_stat_paths["read_array"])
         error_profile, sample_variance = \
                         self.__paths_to_error_profile__(read_stat_paths)
+        self.__delete_analysis_paths__(read_stat_paths)  # not sure if I need this line
         return error_profile, sample_variance
 
     def __delete_analysis_paths__(self, read_stat_paths):
