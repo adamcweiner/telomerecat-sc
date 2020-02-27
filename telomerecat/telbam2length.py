@@ -592,9 +592,7 @@ class ReadStatsFactory(object):
         return error_profile
 
     def __save_error_profile__(self, error_profile, error_path):
-        # TODO: currently getting errors because I'm using relative paths
-        # might need to create directory on juno before calling telomerecat
-        np.savetxt(error_path, error_profile, delimiter=',')
+        np.savetxt(error_path, error_profile.astype(int), delimiter=',')
 
     def __paths_to_sample_variance__(self, read_stat_paths):
         read_counts = pd.read_csv(read_stat_paths["mima_counts"],
