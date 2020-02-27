@@ -550,10 +550,9 @@ class ReadStatsFactory(object):
         # only build error profile if global error isn't passed into this function
         if error_profile is None:
             error_profile = self.__paths_to_error_profile__(read_stat_paths)
-
-        # save error profile if error_path is specified
-        if error_path is not None:
-            self.__save_error_profile__(error_profile, error_path)
+            # save error profile if error_path is specified
+            if error_path is not None:
+                self.__save_error_profile__(error_profile, error_path)
 
         # always build vairance
         sample_variance = self.__paths_to_sample_variance__(read_stat_paths)
