@@ -1170,7 +1170,7 @@ class Telbam2Length(TelomerecatInterface):
             help="Specify whether the input file is a telbam or a txt file\n"
                     "that contains one telbam file per row")
         parser.add_argument(
-            '-b', '--pseudobulk', metavar='TELBAM', type="str", nargs='?', default=None,
+            '-b', '--pseudobulk', metavar='TELBAM', type=str, nargs='?', default=None,
             help="Path to pseudobulk telbam that gets used to create a bulk error\n"
                     "profile and sample variance that is used to categorize\n"
                     "read types for all cells. A telomere length estimate will\n"
