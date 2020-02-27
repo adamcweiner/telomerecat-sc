@@ -1001,7 +1001,10 @@ class Telbam2Length(TelomerecatInterface):
             bulk_name = map(lambda nm: nm.replace("_telbam", ""), names)
 
             # specify bulk sample name in error path
-            current_error_path = str(error_path) + "/" + str(bulk_name) + ".txt"
+            if error_path is not None:
+                current_error_path = str(error_path) + "/" + str(bulk_name) + ".txt"
+            else:
+                current_error_path = None
 
             global_error_profile = self.__get_global_error__(bulk_path,
                                                              vital_stats,
@@ -1026,7 +1029,10 @@ class Telbam2Length(TelomerecatInterface):
                                                    vital_stats)
 
             # specify current sample name in error path
-            current_error_path = str(error_path) + "/" + str(sample_name) + ".txt"
+            if error_path is not None:
+                current_error_path = str(error_path) + "/" + str(sample_name) + ".txt"
+            else:
+                current_error_path = None
 
             read_type_counts = self.__get_read_types__(sample_path,
                                                        vital_stats,
