@@ -592,6 +592,8 @@ class ReadStatsFactory(object):
         return error_profile
 
     def __save_error_profile__(self, error_profile, error_path):
+        # TODO: currently getting errors because I'm using relative paths
+        # might need to create directory on juno before calling telomerecat
         np.savetxt(error_path, error_profile, delimiter=',')
 
     def __paths_to_sample_variance__(self, read_stat_paths):
@@ -984,11 +986,6 @@ class Telbam2Length(TelomerecatInterface):
                                               self.task_size,
                                               trim)
 
-        # TODO: build pseudobulk that merges all telbams in input_paths
-        # 1) have pseudobulk telbam be a command line argument
-        # 2) use pysam to build pseudobulk on the spot here
-        # currently using option 1
-
         # find global error profile when pseudobulk telbam path is provided
         if bulk_path is not None:
             vital_stats = vital_stats_finder.get_vital_stats(bulk_path)
@@ -1029,6 +1026,8 @@ class Telbam2Length(TelomerecatInterface):
                                                    vital_stats)
 
             # specify current sample name in error path
+            # TODO: sample_name is a list of all the sample names... need to find a way
+            # to make current_error_path that's compatible with parallel computing
             if error_path is not None:
                 current_error_path = str(error_path) + "/" + str(sample_name) + ".txt"
             else:
@@ -1114,7 +1113,6 @@ class Telbam2Length(TelomerecatInterface):
 
         return read_type_counts
 
-    # TODO: make sure this function works
     def __get_global_error__(self, sample_path,
                                    vital_stats,
                                    total_procs,
