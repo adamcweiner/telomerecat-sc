@@ -992,7 +992,7 @@ class Telbam2Length(TelomerecatInterface):
                                                    vital_stats)
 
             bulk_name = map(lambda b: os.path.basename(b), bulk_path)
-            bulk_name = map(lambda nm: nm.replace("_telbam", ""), names)
+            bulk_name = map(lambda nm: nm.replace("_telbam", ""), bulk_name)
 
             # specify bulk sample name in error path
             if error_path is not None:
