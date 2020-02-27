@@ -591,7 +591,7 @@ class ReadStatsFactory(object):
         error_profile = self.__get_error_profile__(read_counts, random_counts)
         return error_profile
 
-    def __save_error_profile__(self, error_profile, error_path, vital_stats):
+    def __save_error_profile__(self, error_profile, error_path):
         np.savetxt(error_path, error_profile, delimiter=',')
 
     def __paths_to_sample_variance__(self, read_stat_paths):
