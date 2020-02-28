@@ -542,7 +542,7 @@ class ReadStatsFactory(object):
         self._debug_print = debug_print
         self._trim = trim_reads
 
-    def get_read_counts(self, path, vital_stats, error_profile=None, error_path=None, error_list_path=None):
+    def get_read_counts(self, path, vital_stats, sample_name=None, error_profile=None, error_path=None, error_list=False):
         read_stat_paths = self.run_read_stat_rule(path, vital_stats)
 
         read_array = self.__path_to_read_array__(read_stat_paths["read_array"])
@@ -552,11 +552,14 @@ class ReadStatsFactory(object):
             error_profile = self.__paths_to_error_profile__(read_stat_paths)
             # save error profile if error_path is specified
             if error_path is not None:
-                error_path = error_path.replace(".bam", "_error_profile")
-                self.__save_error_profile__(error_profile, error_path)
-                if error_list_path is not None:
-                    with open(error_list_path, "a") as f:
-                        f.write(str(os.path.basename(error_path)) + '\n')  # add error path name to list txt file
+                if error_list:  # use list format if more than one error profile needs to be saved
+                    temp_error_path = os.path.dirname(error_path) + "/" + str(sample_name)
+                    temp_error_path = temp_error_path.replace(".bam", "_error_profile.txt")
+                    self.__save_error_profile__(error_profile, temp_error_path)
+                    with open(error_path, "a") as f:
+                        f.write(str(os.path.basename(temp_error_path)) + '\n')  # add error path name to list txt file
+                else:
+                    self.__save_error_profile__(error_profile, error_path)
 
         # always build vairance
         sample_variance = self.__paths_to_sample_variance__(read_stat_paths)
@@ -576,7 +579,7 @@ class ReadStatsFactory(object):
 
         # save error profile if error_path is specified
         if error_path is not None:
-            error_path = error_path.replace(".bam", "_error_profile")
+            # error_path = error_path.replace(".bam", "_error_profile")
             self.__save_error_profile__(error_profile, error_path)
 
         self.__delete_analysis_paths__(read_stat_paths)  # not sure if I need this line
@@ -999,11 +1002,9 @@ class Telbam2Length(TelomerecatInterface):
                                                    insert_length_generator,
                                                    vital_stats)
 
-            bulk_name = os.path.basename(bulk_path)
-
             # specify bulk sample name in error path
             if error_path is not None:
-                current_error_path = str(error_path) + "/" + str(bulk_name) + ".txt"
+                current_error_path = error_path
             else:
                 current_error_path = None
 
@@ -1016,10 +1017,6 @@ class Telbam2Length(TelomerecatInterface):
         else:
             global_error_profile = None
 
-        if error_list:
-            error_list_path = str(error_path) + "/error_profile_list.txt"
-        else:
-            error_list_path = None
 
         # write read_type_counts to temp csv for each telbam
         for sample_path, sample_name, in izip(input_paths, names):
@@ -1035,8 +1032,8 @@ class Telbam2Length(TelomerecatInterface):
                                                    vital_stats)
 
             # create file name for current error profile
-            if error_path is not None:
-                current_error_path = str(error_path) + "/" + str(sample_name) + ".txt"
+            if error_path is not None and global_error_profile is None:
+                current_error_path = error_path
             else:
                 current_error_path = None
 
@@ -1044,9 +1041,10 @@ class Telbam2Length(TelomerecatInterface):
                                                        vital_stats,
                                                        self.total_procs,
                                                        trim,
+                                                       sample_name=sample_name,
                                                        error_profile=global_error_profile,
                                                        error_path=current_error_path,
-                                                       error_list_path=error_list_path)
+                                                       error_list=error_list)
 
             self.__write_to_csv__(read_type_counts,
                                         vital_stats,
@@ -1105,10 +1103,11 @@ class Telbam2Length(TelomerecatInterface):
                                  vital_stats,
                                  total_procs,
                                  trim,
+                                 sample_name=sample_name,
                                  read_stats_factory=None,
                                  error_profile=None,
                                  error_path=None,
-                                 error_list_path=None):
+                                 error_list=False):
         if read_stats_factory is None:
             read_stats_factory = ReadStatsFactory(temp_dir=self.temp_dir,
                                                   total_procs=total_procs,
@@ -1117,9 +1116,10 @@ class Telbam2Length(TelomerecatInterface):
 
         read_type_counts = read_stats_factory.get_read_counts(sample_path,
                                                               vital_stats,
+                                                              sample_name=sample_name,
                                                               error_profile=error_profile,
                                                               error_path=error_path,
-                                                              error_list_path=error_list_path)
+                                                              error_list=error_list)
 
         return read_type_counts
 
