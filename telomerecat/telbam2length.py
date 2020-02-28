@@ -1041,7 +1041,7 @@ class Telbam2Length(TelomerecatInterface):
                                                        vital_stats,
                                                        self.total_procs,
                                                        trim,
-                                                       sample_name=sample_name,
+                                                       sample_name,
                                                        error_profile=global_error_profile,
                                                        error_path=current_error_path,
                                                        error_list=error_list)
@@ -1103,7 +1103,7 @@ class Telbam2Length(TelomerecatInterface):
                                  vital_stats,
                                  total_procs,
                                  trim,
-                                 sample_name=sample_name,
+                                 sample_name,
                                  read_stats_factory=None,
                                  error_profile=None,
                                  error_path=None,
