@@ -391,7 +391,7 @@ def estimator_process(job,
     results = length_estimator.start()
 
     # check to see if results are NaN
-    if np.isnan(results) or isinf(results):
+    if np.isnan(results) or np.isinf(results):
         print "found an NaN"
         print "insert_mu:", insert_mu
         print "insert_sigma:", insert_sigma
