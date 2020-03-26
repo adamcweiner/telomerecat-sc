@@ -389,6 +389,17 @@ def estimator_process(job,
                                        boundary,
                                        read_len)
     results = length_estimator.start()
+
+    # check to see if results are NaN
+    if np.isnan(results) or isinf(results):
+        print "found an NaN"
+        print "insert_mu:", insert_mu
+        print "insert_sigma:", insert_sigma
+        print "complete:", complete
+        print "boundary:", boundary
+        print "read_len:", read_len
+        results = 1E9  # set to some large value as placeholder
+
     return results
 
 
