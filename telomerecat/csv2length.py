@@ -266,6 +266,8 @@ class Csv2Length(core.TelomerecatInterface):
                                               self.__get_date_time__())
             self.__output__(sample_intro, 2)
 
+            print sample
+
             # only estimate length if insert_sd > 0; otherwise just say it's NaN
             if sample["Insert_sd"] > 0:
                 length_mean, len_std = run_simulator_par(
@@ -279,6 +281,7 @@ class Csv2Length(core.TelomerecatInterface):
             else:
                 length_mean = "NA"
 
+            print "length_mean": length_mean
             lengths.append(length_mean)
         return lengths
 
@@ -389,6 +392,17 @@ def estimator_process(job,
                                        boundary,
                                        read_len)
     results = length_estimator.start()
+
+    # check to see if results are NaN
+    if np.isnan(results) or np.isinf(results):
+        print "found an NaN"
+        print "insert_mu:", insert_mu
+        print "insert_sigma:", insert_sigma
+        print "complete:", complete
+        print "boundary:", boundary
+        print "read_len:", read_len
+        results = 1E9  # set to some large value as placeholder
+
     return results
 
 
