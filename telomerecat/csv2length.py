@@ -228,6 +228,7 @@ class Csv2Length(core.TelomerecatInterface):
         
         if simulate_lengths:
             counts["Length"] = self.__get_lengths__(counts, simulator_n)
+            # TODO: should just be able to add counts["Length_sd"] to output from __get_lengths__
         else:
             counts["Length"] = self.__quick_length__(counts)
 
@@ -283,6 +284,7 @@ class Csv2Length(core.TelomerecatInterface):
 
             print "length_mean": length_mean
             lengths.append(length_mean)
+            # TODO: create a list of len_std results and save them
         return lengths
 
     def __generate_output_paths__(self, input_paths, output_paths):
