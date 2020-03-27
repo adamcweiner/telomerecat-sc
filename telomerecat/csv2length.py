@@ -227,10 +227,11 @@ class Csv2Length(core.TelomerecatInterface):
             counts["F2a_c"] = counts["F2a"]
         
         if simulate_lengths:
-            counts["Length"] = self.__get_lengths__(counts, simulator_n)
-            # TODO: should just be able to add counts["Length_sd"] to output from __get_lengths__
+            counts["Length"], counts["Length_std"] = self.__get_lengths__(counts, simulator_n)
         else:
-            counts["Length"] = self.__quick_length__(counts)
+            lengths = self.__quick_length__(counts)
+            counts["Length"] = lengths
+            counts["Length_std"] = [0.000] * len(lengths)  # stdev is always 0 with quick_length
 
         return counts
 
@@ -261,7 +262,8 @@ class Csv2Length(core.TelomerecatInterface):
         return lengths
 
     def __get_lengths__(self, counts, simulator_n):
-        lengths = []
+        length_means = []
+        length_stds = []
         for i, sample in counts.iterrows():
             sample_intro = "\t- %s | %s\n" % (sample["Sample"],
                                               self.__get_date_time__())
@@ -271,7 +273,7 @@ class Csv2Length(core.TelomerecatInterface):
 
             # only estimate length if insert_sd > 0; otherwise just say it's NaN
             if sample["Insert_sd"] > 0:
-                length_mean, len_std = run_simulator_par(
+                length_mean, length_std = run_simulator_par(
                     sample["Insert_mean"],
                     sample["Insert_sd"],
                     sample["F1"],
@@ -281,11 +283,12 @@ class Csv2Length(core.TelomerecatInterface):
                     simulator_n)
             else:
                 length_mean = "NA"
+                length_std = "NA"
 
-            print "length_mean": length_mean
-            lengths.append(length_mean)
-            # TODO: create a list of len_std results and save them
-        return lengths
+            print "length_mean:", length_mean
+            length_means.append(length_mean)
+            length_stds.append(length_std)
+        return length_means, length_stds
 
     def __generate_output_paths__(self, input_paths, output_paths):
         if len(output_paths) < len(input_paths):
