@@ -645,6 +645,7 @@ class ReadStatsFactory(object):
                                    dif_loci_y - 15:
                                    dif_loci_y + 1]
             hi_thresh = hi_thresh.flatten()
+            print "hi_thresh.shape:", hi_thresh.shape
 
             thresh = np.percentile(hi_thresh, 95)
 
