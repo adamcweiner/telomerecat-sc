@@ -655,8 +655,11 @@ class ReadStatsFactory(object):
         if self._debug_print:
             print 'Thresh:', thresh
 
+        print "dif_counts.shape:", dif_counts.shape
         error_profile = (dif_counts * (dif_counts > 0)) > thresh
         error_profile = error_profile * 1
+
+        print "error_profile.shape", error_profile.shape
 
         return error_profile
 
