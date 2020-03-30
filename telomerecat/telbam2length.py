@@ -647,7 +647,7 @@ class ReadStatsFactory(object):
             hi_thresh = hi_thresh.flatten()
             # TODO: hi_thresh.shape is (0,) for case that's throwing error
             # maybe throw an error here and return an error profile of just 0's later down the road
-            print "read_counts.shape:" read_counts.shape
+            print "read_counts.shape:", read_counts.shape
             print "hi_thresh.shape:", hi_thresh.shape
 
             thresh = np.percentile(hi_thresh, 95)
