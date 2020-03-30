@@ -645,21 +645,24 @@ class ReadStatsFactory(object):
                                    dif_loci_y - 15:
                                    dif_loci_y + 1]
             hi_thresh = hi_thresh.flatten()
+
             # TODO: hi_thresh.shape is (0,) for case that's throwing error
             # maybe throw an error here and return an error profile of just 0's later down the road
             print "read_counts.shape:", read_counts.shape
             print "hi_thresh.shape:", hi_thresh.shape
+            if hi_thresh.shape[0] <= 0:
+                return np.zeros(dif_counts.shape)
 
             thresh = np.percentile(hi_thresh, 95)
 
         if self._debug_print:
             print 'Thresh:', thresh
 
-        print "dif_counts.shape:", dif_counts.shape
+        # print "dif_counts.shape:", dif_counts.shape
         error_profile = (dif_counts * (dif_counts > 0)) > thresh
         error_profile = error_profile * 1
 
-        print "error_profile.shape", error_profile.shape
+        # print "error_profile.shape", error_profile.shape
 
         return error_profile
 
