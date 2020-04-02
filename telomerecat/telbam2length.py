@@ -646,6 +646,10 @@ class ReadStatsFactory(object):
                                    dif_loci_y + 1]
             hi_thresh = hi_thresh.flatten()
 
+            # return a matrix of 0's when hi_thresh is invalid
+            if hi_thresh.shape[0] <= 0:
+                return np.zeros(dif_counts.shape)
+
             thresh = np.percentile(hi_thresh, 95)
 
         if self._debug_print:
