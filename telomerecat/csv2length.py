@@ -258,7 +258,6 @@ class Csv2Length(core.TelomerecatInterface):
     def __get_F1_only_lengths__(self, counts):
         lengths = []
         for i, sample in counts.iterrows():
-            print sample
             length = (sample["F1"] * 2 * sample["Read_length"]) / (sample["coverage"] * sample["num_tel"])
             lengths.append(round(length, 3))
         return lengths
