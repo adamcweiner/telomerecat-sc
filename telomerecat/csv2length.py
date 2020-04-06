@@ -230,7 +230,7 @@ class Csv2Length(core.TelomerecatInterface):
         if "coverage" in counts.columns and "num_tel" in counts.columns:
             F1_only_lengths = True
         else:
-            False
+            F1_only_lengths = False
         
         if F1_only_lengths:
             counts["Length"] = self.__get_F1_only_lengths__(counts)
