@@ -228,7 +228,8 @@ class Csv2Length(core.TelomerecatInterface):
             counts["F2a_c"] = counts["F2a"]
         
         if "coverage" in counts.columns and "num_tel" in counts.columns:
-            counts["Length"] = self.__get_F1_only_lengths__(counts)
+            lengths = self.__get_F1_only_lengths__(counts)
+            counts["Length"] = lengths
             counts["Length_std"] = [0.000] * len(lengths)  # stdev is always 0 with F1_only_lengths
         elif simulate_lengths:
             counts["Length"], counts["Length_std"] = self.__get_lengths__(counts, simulator_n)
