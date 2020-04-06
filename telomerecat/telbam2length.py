@@ -1076,8 +1076,8 @@ class Telbam2Length(TelomerecatInterface):
                                             vital_stats,
                                             temp_csv_path,
                                             names[i],
-                                            coverages[i],
-                                            num_tels[i])
+                                            float(coverages[i]),
+                                            float(num_tels[i]))
             else:
                 self.__write_to_csv__(read_type_counts,
                                             vital_stats,
