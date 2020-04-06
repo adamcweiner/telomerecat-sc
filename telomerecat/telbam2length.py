@@ -1223,7 +1223,7 @@ class Telbam2Length(TelomerecatInterface):
                                              vital_stats["read_len"],
                                              vital_stats["initial_read_len"]))
             else:
-                counts.write("%s,%d,%d,%d,%.3f,%.3f,%.3f,%d,%d,%d,%d\n" % \
+                counts.write("%s,%d,%d,%d,%.3f,%.3f,%.3f,%d,%d,%.6f,%.3f\n" % \
                                             (name,
                                              read_type_counts["F1"],
                                              read_type_counts["F2"],
