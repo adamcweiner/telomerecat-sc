@@ -1294,7 +1294,7 @@ class Telbam2Length(TelomerecatInterface):
                   "then only the first 90 bases are\n"
                   "considered) [Default: Whole read]")
         parser.add_argument(
-            '-F1', 'F1_only', action="store_true", default=False,
+            '-F1', '--F1_only', action="store_true", default=False,
             help="Use this option when input txt file also has coverage and number\n"
                     "of telomeres. Telomere length will be calculated only using F1, coverage,\n"
                     "and number of telomeres in this case.")
