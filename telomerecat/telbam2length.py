@@ -936,7 +936,7 @@ class Telbam2Length(TelomerecatInterface):
         num_tels = None
 
         if self.cmd_args.file_input:  # input is txt files containing telbam paths
-            if self.cmd_args.F1_only:  # file input contains coverage and number of telomeres too
+            if self.cmd_args.cov_ntel:  # file input contains coverage and number of telomeres too
                 telbams_paths = []
                 coverages = []
                 num_tels = []
@@ -970,7 +970,7 @@ class Telbam2Length(TelomerecatInterface):
                  bulk_path=self.cmd_args.pseudobulk,
                  error_path=self.cmd_args.error_path,
                  error_list=self.cmd_args.error_list,
-                 F1_only=self.cmd_args.F1_only,
+                 cov_ntel=self.cmd_args.cov_ntel,
                  coverages=coverages,
                  num_tels=num_tels)
 
@@ -983,7 +983,7 @@ class Telbam2Length(TelomerecatInterface):
                   bulk_path=None,
                   error_path=None,
                   error_list=False,
-                  F1_only=False,
+                  cov_ntel=False,
                   coverages=None,
                   num_tels=None):
         
@@ -999,6 +999,9 @@ class Telbam2Length(TelomerecatInterface):
             bulk_path (string): A path to a specified pseudobulk telbam (optional)
             error_path (string): A directory path used to store error profiles as CSVs (optional)
             error_list (bool): Denote whether to store non-global error profiles to a list (optional)
+            cov_ntel (bool): Denote whether coverages and num_tels have been provided within the input_paths txt file (optional)
+            coverages (list): Coverages extracted from the original input_paths txt file
+            num_tels (list): Number of telomeres per sample extracted from the original input_paths txt file
         """
 
         self.__introduce__()
@@ -1007,7 +1010,7 @@ class Telbam2Length(TelomerecatInterface):
         names = map(lambda nm: nm.replace("_telbam", ""), names)
 
         output_csv_path = self.__get_output_path__(output_path)
-        temp_csv_path = self.__get_temp_path__(F1_only)
+        temp_csv_path = self.__get_temp_path__(cov_ntel)
 
         insert_length_generator = self.__get_insert_generator__(inserts_path)
 
@@ -1050,7 +1053,6 @@ class Telbam2Length(TelomerecatInterface):
 
             self.__output__(sample_intro, 2)
 
-            # TODO: add coverage and num_tel to vital_stats when necessary
             vital_stats = vital_stats_finder.get_vital_stats(sample_path)
 
             self.__check_vital_stats_insert_size__(inserts_path,
@@ -1071,7 +1073,9 @@ class Telbam2Length(TelomerecatInterface):
                                                        error_profile=global_error_profile,
                                                        error_path=current_error_path,
                                                        error_list=error_list)
-            if F1_only:
+
+            # only include coverages and num_tels if they are non-empty lists
+            if cov_ntel:
                 self.__write_to_csv__(read_type_counts,
                                             vital_stats,
                                             temp_csv_path,
@@ -1175,10 +1179,10 @@ class Telbam2Length(TelomerecatInterface):
 
         return error_profile
 
-    def __get_temp_path__(self, F1_only=False):
+    def __get_temp_path__(self, cov_ntel=False):
         temp_path = os.path.join(self.temp_dir, "telomerecat_temp_%d.csv" \
                                                             % (time.time()))
-        self.__create_output_file__(temp_path, F1_only)
+        self.__create_output_file__(temp_path, cov_ntel)
         return temp_path
 
     def __get_output_path__(self, user_output_path):
@@ -1191,10 +1195,10 @@ class Telbam2Length(TelomerecatInterface):
 
         return tmct_output_path
 
-    # TODO: add coverage and num_tel here when necessary
-    def __create_output_file__(self, output_csv_path, F1_only=False):
+    def __create_output_file__(self, output_csv_path, cov_ntel=False):
         with open(output_csv_path, "w") as total:
-            if F1_only:
+            # use if-statement to know whether coverage & num_tel belong in csv header
+            if cov_ntel:
                 header = ("Sample,F1,F2,F4,Psi,Insert_mean,Insert_sd,"
                           "Read_length,Initial_read_length,coverage,num_tel\n")
             else:
@@ -1211,6 +1215,7 @@ class Telbam2Length(TelomerecatInterface):
                          coverage=None,
                          num_tel=None):
         with open(output_csv_path, "a") as counts:
+            # use if-statement to see whether we have a coverage or num_tel to write on this line
             if coverage is None or num_tel is None:
                 counts.write("%s,%d,%d,%d,%.3f,%.3f,%.3f,%d,%d\n" % \
                                             (name,
@@ -1264,7 +1269,9 @@ class Telbam2Length(TelomerecatInterface):
         parser.add_argument(
             '-i', '--file_input', action="store_true", default=False,
             help="Specify whether the input file is a telbam or a txt file\n"
-                    "that contains one telbam file per row")
+                    "that contains one telbam file per row. If the -cnt flag is\n"
+                    "also used then the input txt file also contains coverage\n"
+                    "and number of chromosomes on each row (separated by comma).")
         parser.add_argument(
             '-b', '--pseudobulk', metavar='TELBAM', type=str, nargs='?', default=None,
             help="Path to pseudobulk telbam that gets used to create a bulk error\n"
@@ -1294,9 +1301,9 @@ class Telbam2Length(TelomerecatInterface):
                   "then only the first 90 bases are\n"
                   "considered) [Default: Whole read]")
         parser.add_argument(
-            '-F1', '--F1_only', action="store_true", default=False,
+            '-cnt', '--cov_ntel', action="store_true", default=False,
             help="Use this option when input txt file also has coverage and number\n"
-                    "of telomeres. Telomere length will be calculated only using F1, coverage,\n"
+                    "of telomeres. Telomere length will be calculated using F1, F2a_c, coverage,\n"
                     "and number of telomeres in this case.")
 
         return parser

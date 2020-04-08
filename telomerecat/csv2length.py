@@ -191,7 +191,6 @@ class Csv2Length(core.TelomerecatInterface):
                 self.__output__("\tInput: %s\n" % (input_path,), 1)
                 self.__output__(" \tOutput: %s\n" % (output_path,), 1)
 
-            # TODO: make sure that coverage and num_tel are in counts when we want to use F1_only_method 
             counts = pd.read_csv(input_path)
             counts = self.__get_length_from_dataframe__(counts,
                                                         simulator_n,
@@ -228,9 +227,9 @@ class Csv2Length(core.TelomerecatInterface):
             counts["F2a_c"] = counts["F2a"]
         
         if "coverage" in counts.columns and "num_tel" in counts.columns:
-            lengths = self.__get_F1_only_lengths__(counts)
+            lengths = self.__get_cov_ntel_lengths__(counts)
             counts["Length"] = lengths
-            counts["Length_std"] = [0.000] * len(lengths)  # stdev is always 0 with F1_only_lengths
+            counts["Length_std"] = [0.000] * len(lengths)  # stdev is always 0 with cov_ntel_lengths
         elif simulate_lengths:
             counts["Length"], counts["Length_std"] = self.__get_lengths__(counts, simulator_n)
         else:
@@ -255,13 +254,13 @@ class Csv2Length(core.TelomerecatInterface):
 
         return corrected_f2_counts.round(3)
 
-    def __get_F1_only_lengths__(self, counts):
+    def __get_cov_ntel_lengths__(self, counts):
+        """ Calculate telomere length based on coverage, number of telomere, and read counts. """
         lengths = []
         for i, sample in counts.iterrows():
             length = ((sample["F1"] * 2 + sample["F2a_c"]) * sample["Read_length"]) / (sample["coverage"] * sample["num_tel"])
             lengths.append(round(length, 3))
         return lengths
-
 
     def __quick_length__(self, counts):
         lengths = []
