@@ -244,7 +244,7 @@ class Csv2Length(core.TelomerecatInterface):
         theta_observed = counts["F2a"] / (counts["F2"] + counts["F4"] + np.finfo(float).eps)  # include very small float eps so that 0/0 = NaN turns into 0/eps = 0
 
         prior_weight = 3
-        theta_expected = sum(theta_observed * counts["F2"]) / sum(counts["F2"])
+        theta_expected = sum(theta_observed * counts["F2"]) / (sum(counts["F2"]) + np.finfo(float).eps)
 
         theta_corrected = ((theta_observed * (counts["Psi"])) +
                              (theta_expected * prior_weight)) \
