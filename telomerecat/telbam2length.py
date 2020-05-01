@@ -932,12 +932,27 @@ class Telbam2Length(TelomerecatInterface):
             cmd_run=cmd_run)
 
     def run_cmd(self):
+        coverages = None
+        num_tels = None
+
         if self.cmd_args.file_input:  # input is txt files containing telbam paths
-            telbams_paths = []
-            for file in self.cmd_args.input:
-                with open(file, 'rb') as f:
-                    lines = [line.strip() for line in f]
-                    telbams_paths.extend(lines)
+            if self.cmd_args.cov_ntel:  # file input contains coverage and number of telomeres too
+                telbams_paths = []
+                coverages = []
+                num_tels = []
+                for file in self.cmd_args.input:
+                    with open(file, 'rb') as f:
+                        for line in f:
+                            items = line.split(",")
+                            telbams_paths.append(items[0])
+                            coverages.append(items[1])
+                            num_tels.append(items[2])
+            else:  # txt file input just has telbam paths
+                telbams_paths = []
+                for file in self.cmd_args.input:
+                    with open(file, 'rb') as f:
+                        lines = [line.strip() for line in f]
+                        telbams_paths.extend(lines)
                 
         else:  # input is already a list of telbam paths
             telbams_paths = self.cmd_args.input
@@ -954,7 +969,10 @@ class Telbam2Length(TelomerecatInterface):
                  inserts_path=self.cmd_args.insert,
                  bulk_path=self.cmd_args.pseudobulk,
                  error_path=self.cmd_args.error_path,
-                 error_list=self.cmd_args.error_list)
+                 error_list=self.cmd_args.error_list,
+                 cov_ntel=self.cmd_args.cov_ntel,
+                 coverages=coverages,
+                 num_tels=num_tels)
 
     def run(self, input_paths,
                   trim=0,
@@ -964,7 +982,10 @@ class Telbam2Length(TelomerecatInterface):
                   inserts_path=None,
                   bulk_path=None,
                   error_path=None,
-                  error_list=False):
+                  error_list=False,
+                  cov_ntel=False,
+                  coverages=None,
+                  num_tels=None):
         
         """The main function for invoking the part of the
            program which creates a telbam from a bam
@@ -978,6 +999,9 @@ class Telbam2Length(TelomerecatInterface):
             bulk_path (string): A path to a specified pseudobulk telbam (optional)
             error_path (string): A directory path used to store error profiles as CSVs (optional)
             error_list (bool): Denote whether to store non-global error profiles to a list (optional)
+            cov_ntel (bool): Denote whether coverages and num_tels have been provided within the input_paths txt file (optional)
+            coverages (list): Coverages extracted from the original input_paths txt file
+            num_tels (list): Number of telomeres per sample extracted from the original input_paths txt file
         """
 
         self.__introduce__()
@@ -986,7 +1010,7 @@ class Telbam2Length(TelomerecatInterface):
         names = map(lambda nm: nm.replace("_telbam", ""), names)
 
         output_csv_path = self.__get_output_path__(output_path)
-        temp_csv_path = self.__get_temp_path__()
+        temp_csv_path = self.__get_temp_path__(cov_ntel)
 
         insert_length_generator = self.__get_insert_generator__(inserts_path)
 
@@ -1023,8 +1047,8 @@ class Telbam2Length(TelomerecatInterface):
 
 
         # write read_type_counts to temp csv for each telbam
-        for sample_path, sample_name, in izip(input_paths, names):
-            sample_intro = "\t- %s | %s\n" % (sample_name,
+        for i, sample_path in enumerate(input_paths):
+            sample_intro = "\t- %s | %s\n" % (names[i],
                                               self.__get_date_time__())
 
             self.__output__(sample_intro, 2)
@@ -1045,15 +1069,24 @@ class Telbam2Length(TelomerecatInterface):
                                                        vital_stats,
                                                        self.total_procs,
                                                        trim,
-                                                       sample_name,
+                                                       names[i],
                                                        error_profile=global_error_profile,
                                                        error_path=current_error_path,
                                                        error_list=error_list)
 
-            self.__write_to_csv__(read_type_counts,
-                                        vital_stats,
-                                        temp_csv_path,
-                                        sample_name)
+            # only include coverages and num_tels if they are non-empty lists
+            if cov_ntel:
+                self.__write_to_csv__(read_type_counts,
+                                            vital_stats,
+                                            temp_csv_path,
+                                            names[i],
+                                            float(coverages[i]),
+                                            float(num_tels[i]))
+            else:
+                self.__write_to_csv__(read_type_counts,
+                                            vital_stats,
+                                            temp_csv_path,
+                                            names[i])
         
         self.__output__("\n", 1)
         length_interface = Csv2Length(temp_dir=self.temp_dir,
@@ -1146,10 +1179,10 @@ class Telbam2Length(TelomerecatInterface):
 
         return error_profile
 
-    def __get_temp_path__(self):
+    def __get_temp_path__(self, cov_ntel=False):
         temp_path = os.path.join(self.temp_dir, "telomerecat_temp_%d.csv" \
                                                             % (time.time()))
-        self.__create_output_file__(temp_path)
+        self.__create_output_file__(temp_path, cov_ntel)
         return temp_path
 
     def __get_output_path__(self, user_output_path):
@@ -1162,10 +1195,15 @@ class Telbam2Length(TelomerecatInterface):
 
         return tmct_output_path
 
-    def __create_output_file__(self, output_csv_path):
+    def __create_output_file__(self, output_csv_path, cov_ntel=False):
         with open(output_csv_path, "w") as total:
-            header = ("Sample,F1,F2,F4,Psi,Insert_mean,Insert_sd,"
-                      "Read_length,Initial_read_length\n")
+            # use if-statement to know whether coverage & num_tel belong in csv header
+            if cov_ntel:
+                header = ("Sample,F1,F2,F4,Psi,Insert_mean,Insert_sd,"
+                          "Read_length,Initial_read_length,coverage,num_tel\n")
+            else:
+                header = ("Sample,F1,F2,F4,Psi,Insert_mean,Insert_sd,"
+                          "Read_length,Initial_read_length\n")
             total.write(header)
         return output_csv_path
 
@@ -1173,18 +1211,35 @@ class Telbam2Length(TelomerecatInterface):
                          read_type_counts,
                          vital_stats,
                          output_csv_path,
-                         name):
+                         name,
+                         coverage=None,
+                         num_tel=None):
         with open(output_csv_path, "a") as counts:
-            counts.write("%s,%d,%d,%d,%.3f,%.3f,%.3f,%d,%d\n" % \
-                                        (name,
-                                         read_type_counts["F1"],
-                                         read_type_counts["F2"],
-                                         read_type_counts["F4"],
-                                         read_type_counts["sample_variance"],
-                                         vital_stats["insert_mean"],
-                                         vital_stats["insert_sd"],
-                                         vital_stats["read_len"],
-                                         vital_stats["initial_read_len"]))
+            # use if-statement to see whether we have a coverage or num_tel to write on this line
+            if coverage is None or num_tel is None:
+                counts.write("%s,%d,%d,%d,%.3f,%.3f,%.3f,%d,%d\n" % \
+                                            (name,
+                                             read_type_counts["F1"],
+                                             read_type_counts["F2"],
+                                             read_type_counts["F4"],
+                                             read_type_counts["sample_variance"],
+                                             vital_stats["insert_mean"],
+                                             vital_stats["insert_sd"],
+                                             vital_stats["read_len"],
+                                             vital_stats["initial_read_len"]))
+            else:
+                counts.write("%s,%d,%d,%d,%.3f,%.3f,%.3f,%d,%d,%.6f,%.3f\n" % \
+                                            (name,
+                                             read_type_counts["F1"],
+                                             read_type_counts["F2"],
+                                             read_type_counts["F4"],
+                                             read_type_counts["sample_variance"],
+                                             vital_stats["insert_mean"],
+                                             vital_stats["insert_sd"],
+                                             vital_stats["read_len"],
+                                             vital_stats["initial_read_len"],
+                                             coverage,
+                                             num_tel))
 
     def get_parser(self):
         parser = self.default_parser()
@@ -1214,7 +1269,9 @@ class Telbam2Length(TelomerecatInterface):
         parser.add_argument(
             '-i', '--file_input', action="store_true", default=False,
             help="Specify whether the input file is a telbam or a txt file\n"
-                    "that contains one telbam file per row")
+                    "that contains one telbam file per row. If the -cnt flag is\n"
+                    "also used then the input txt file also contains coverage\n"
+                    "and number of chromosomes on each row (separated by comma).")
         parser.add_argument(
             '-b', '--pseudobulk', metavar='TELBAM', type=str, nargs='?', default=None,
             help="Path to pseudobulk telbam that gets used to create a bulk error\n"
@@ -1243,6 +1300,11 @@ class Telbam2Length(TelomerecatInterface):
                   "option (i.e if the value 90 is supplied\n"
                   "then only the first 90 bases are\n"
                   "considered) [Default: Whole read]")
+        parser.add_argument(
+            '-cnt', '--cov_ntel', action="store_true", default=False,
+            help="Use this option when input txt file also has coverage and number\n"
+                    "of telomeres. Telomere length will be calculated using F1, F2a_c, coverage,\n"
+                    "and number of telomeres in this case.")
 
         return parser
 
