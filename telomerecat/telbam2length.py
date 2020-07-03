@@ -9,6 +9,7 @@ import textwrap
 import time
 import os
 import re
+import csv
 import parabam
 
 import numpy as np
@@ -564,13 +565,13 @@ class ReadStatsFactory(object):
         # always build vairance
         sample_variance = self.__paths_to_sample_variance__(read_stat_paths)
 
-        read_counts = self.read_array_to_counts(read_array,
+        read_counts, complete_indicies, boundary_indicies = self.read_array_to_counts(read_array,
                                                 error_profile,
                                                 sample_variance)
 
         self.__delete_analysis_paths__(read_stat_paths)
 
-        return read_counts
+        return read_counts, complete_indicies, boundary_indicies
 
     def get_global_error(self, bulk_path, vital_stats, error_path=None):
         read_stat_paths = self.run_read_stat_rule(bulk_path, vital_stats)
@@ -792,7 +793,7 @@ class ReadStatsFactory(object):
         return pd.read_csv(read_array_path, header=None).values
 
     def read_array_to_counts(self, read_array, error_profile, sample_variance):
-        complete_reads, boundary_reads = \
+        complete_reads, boundary_reads, complete_indicies, boundary_indicies = \
             self.__get_complete_status__(read_array, error_profile)
 
         f2_count, f4_count = self.__get_boundary_counts__(boundary_reads)
@@ -803,7 +804,7 @@ class ReadStatsFactory(object):
                       "F4": f4_count,
                       "sample_variance": sample_variance}
 
-        return return_dat
+        return return_dat, complete_indicies, boundary_indicies
 
     def __get_f1_count__(self, complete_reads):
         return float(complete_reads.shape[0]) / 2
@@ -836,7 +837,8 @@ class ReadStatsFactory(object):
                 boundary_indicies.append(i)
 
         return read_array[complete_indicies, :],\
-                read_array[boundary_indicies, :]
+                read_array[boundary_indicies, :],\
+                complete_indicies, boundary_indicies
 
     def run_read_stat_rule(self, path,
                                  vital_stats,
@@ -886,7 +888,7 @@ class ReadStatsFactory(object):
 
             results = {"read_array": np.array(return_dat),
                        "random_counts": random_counts,
-                       "mima_counts": mima_counts}
+                       "mima_counts": mima_counts, }
 
             return results
 
@@ -975,7 +977,9 @@ class Telbam2Length(TelomerecatInterface):
                  error_list=self.cmd_args.error_list,
                  cov_ntel=self.cmd_args.cov_ntel,
                  coverages=coverages,
-                 num_tels=num_tels)
+                 num_tels=num_tels,
+                 boundary_ind_path=cmd_args.boundary_ind_path,
+                 complete_ind_path=cmd_args.complete_ind_path)
 
     def run(self, input_paths,
                   trim=0,
@@ -988,7 +992,9 @@ class Telbam2Length(TelomerecatInterface):
                   error_list=False,
                   cov_ntel=False,
                   coverages=None,
-                  num_tels=None):
+                  num_tels=None,
+                  boundary_ind_path=None,
+                  complete_ind_path=None):
         
         """The main function for invoking the part of the
            program which creates a telbam from a bam
@@ -1048,6 +1054,8 @@ class Telbam2Length(TelomerecatInterface):
         else:
             global_error_profile = None
 
+        all_complete_indicies = {}
+        all_boundary_indicies = {}
 
         # write read_type_counts to temp csv for each telbam
         for i, sample_path in enumerate(input_paths):
@@ -1068,7 +1076,7 @@ class Telbam2Length(TelomerecatInterface):
             else:
                 current_error_path = None
 
-            read_type_counts = self.__get_read_types__(sample_path,
+            read_type_counts, complete_indicies, boundary_indicies = self.__get_read_types__(sample_path,
                                                        vital_stats,
                                                        self.total_procs,
                                                        trim,
@@ -1076,6 +1084,10 @@ class Telbam2Length(TelomerecatInterface):
                                                        error_profile=global_error_profile,
                                                        error_path=current_error_path,
                                                        error_list=error_list)
+
+            # TODO: store complete_indicies and boundary_indicies for this given cell in a dict of lists
+            all_boundary_indicies[names[i]] = boundary_indicies
+            all_complete_indicies[names[i]] = complete_indicies
 
             # only include coverages and num_tels if they are non-empty lists
             if cov_ntel:
@@ -1091,6 +1103,19 @@ class Telbam2Length(TelomerecatInterface):
                                             temp_csv_path,
                                             names[i])
         
+        if boundary_ind_path is not None:
+            with open(boundary_ind_path, "wb") as outfile:
+                writer = csv.writer(outfile)
+                writer.writerow(all_boundary_indicies.keys())
+                writer.writerows(itertools.izip_longest(*all_boundary_indicies.values()))
+
+        if complete_ind_path is not None:
+            with open(complete_ind_path, "wb") as outfile:
+                writer = csv.writer(outfile)
+                writer.writerow(all_complete_indicies.keys())
+                writer.writerows(itertools.izip_longest(*all_complete_indicies.values()))
+
+
         self.__output__("\n", 1)
         length_interface = Csv2Length(temp_dir=self.temp_dir,
                                        total_procs=self.total_procs,
@@ -1154,14 +1179,14 @@ class Telbam2Length(TelomerecatInterface):
                                                   trim_reads=trim,
                                                   debug_print=False)
 
-        read_type_counts = read_stats_factory.get_read_counts(sample_path,
+        read_type_counts, complete_indicies, boundary_indicies = read_stats_factory.get_read_counts(sample_path,
                                                               vital_stats,
                                                               sample_name=sample_name,
                                                               error_profile=error_profile,
                                                               error_path=error_path,
                                                               error_list=error_list)
 
-        return read_type_counts
+        return read_type_counts, complete_indicies, boundary_indicies
 
     def __get_global_error__(self, sample_path,
                                    vital_stats,
@@ -1308,6 +1333,12 @@ class Telbam2Length(TelomerecatInterface):
             help="Use this option when input txt file also has coverage and number\n"
                     "of telomeres. Telomere length will be calculated using F1, F2a_c, coverage,\n"
                     "and number of telomeres in this case.")
+        parser.add_argument(
+            '-bip', '--boundary_ind_path', type=str, nargs='?', default=None,
+            help="Specify path to store csv file for boundary read indicies in each BAM.")
+        parser.add_argument(
+            '-cip', '--complete_ind_path', type=str, nargs='?', default=None,
+            help="Specify path to store csv file for complete read indicies in each BAM.")
 
         return parser
 
