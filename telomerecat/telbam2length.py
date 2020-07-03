@@ -861,9 +861,6 @@ class ReadStatsFactory(object):
             return return_stats
 
         def rule(reads, constants, master):
-            print reads[0]
-            print reads[1]
-            print len(reads)
             simple_reads = [simple_read_factory.get_simple_read(read)
                                 for read in reads]
             return_dat = np.zeros((2, 6))
