@@ -9,6 +9,7 @@ Author: jhrf
 """
 
 import textwrap
+import pysam
 
 from telomerecat.core import TelomerecatInterface
 
@@ -39,7 +40,9 @@ class Bam2Length(TelomerecatInterface):
                  inserts_path=self.cmd_args.insert,
                  discard_telbams=self.cmd_args.discard_telbams,
                  correct_f2a=self.cmd_args.enable_correction,
-                 simulator_n=self.cmd_args.simulator_runs)
+                 simulator_n=self.cmd_args.simulator_runs,
+                 pseudobulk=self.cmd_args.pseudobulk,
+                 file_input=self.cmd_args.file_input)
 
     def run(self,
             input_paths,
@@ -47,13 +50,24 @@ class Bam2Length(TelomerecatInterface):
             inserts_path=None,
             discard_telbams=False,
             correct_f2a=False,
-            simulator_n=10):
+            simulator_n=10,
+            pseudobulk=False,
+            file_input=False):
         
         # Import here to avoid infinite loop on import
         from telomerecat import Bam2Telbam
         from telomerecat import Telbam2Length
 
         self.__introduce__()
+
+        if file_input:
+            bam_paths = []
+            for file in input_paths:
+                with open(file, 'rb') as f:
+                    lines = [line.strip() for line in f]
+                    bam_paths.extend(lines)
+        else:
+            bam_paths = input_paths
 
         telbam_interface = Bam2Telbam(temp_dir=self.temp_dir,
                                       total_procs=self.total_procs,
@@ -62,10 +76,17 @@ class Bam2Length(TelomerecatInterface):
                                       verbose=self.verbose,
                                       announce=False)
 
-        out_files = telbam_interface.run(input_paths=input_paths,
+        out_files = telbam_interface.run(input_paths=bam_paths,
                                          keep_in_temp=discard_telbams)
 
         length_paths = self.collapse_out_files(out_files)
+
+        if pseudobulk:
+            pseudobulk_telbam = str(self.temp_dir) + '/pseudobulk_telbam.bam'
+            pysam.merge(pseudobulk_telbam, *length_paths)
+        else:
+            pseudobulk_telbam = None
+
         length_interface = Telbam2Length(temp_dir=self.temp_dir,
                                          total_procs=self.total_procs,
                                          task_size=self.task_size,
@@ -77,7 +98,8 @@ class Bam2Length(TelomerecatInterface):
                              output_path=output_path,
                              inserts_path=inserts_path,
                              simulator_n=simulator_n,
-                             correct_f2a=correct_f2a)
+                             correct_f2a=correct_f2a,
+                             bulk_path=pseudobulk_telbam)
 
         self.__goodbye__()
         self.interface_exit()
@@ -122,6 +144,16 @@ class Bam2Length(TelomerecatInterface):
             action="store_true", default=False,
             help=('The program will NOT save any TELBAMs\n'
                    'generated as part of the analysis'))
+        parser.add_argument(
+            '-b', '--pseudobulk',
+            action="store_true", default=False,
+            help=('Use a pseudobulk error profile if\n'
+                   'this flag is marked.'))
+        parser.add_argument(
+            '-i', '--file_input',
+            action="store_true", default=False,
+            help="Specify whether the input is a list or txt file that\n"
+                    "that contains one bam file per row.")
 
         return parser
 

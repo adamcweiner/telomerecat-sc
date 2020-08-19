@@ -69,18 +69,5 @@ class TelomerecatInterface(parabam.core.Interface):
             action="store_true", default=False,
             help='Correction will be applied to F2a values')
 
-        # TODO: Implement these additional parameters:
-        #
-        # parser.add_argument(
-        #     '-b', '--brief_csv',
-        #     action="store_true", default=False,
-        #     help=('The output CSV will be comprised of\n'
-        #            'only the essential columns'))
-        # parser.add_argument(
-        #     '-w', '--prior_weight',
-        #     metavar='INT', type=int, default=3,
-        #     help=('The weight given to the prior expectation\n'
-        #           'in F2a correction [Default 3]'))
-
         return parser
 
