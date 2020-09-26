@@ -767,6 +767,7 @@ class ReadStatsFactory(object):
 
     def __rationalise_error_profile__(self, error_profile):
         if error_profile.sum() > 0:
+            # ensure each row makes sense
             start_row = np.where(error_profile)[0].max()
             global_loci = 0
             for i in reversed(xrange(0, start_row + 1)):
@@ -776,9 +777,22 @@ class ReadStatsFactory(object):
                 else:
                     cur_loci = 0
 
-                # if cur_loci > global_loci:
                 global_loci = cur_loci
                 error_profile[i, :global_loci + 1] = True
+
+            # ensure each column makes sense
+            start_col = np.where(error_profile)[1].max()
+            global_loci = 0
+            for j in reversed(xrange(0, start_col + 1)):
+                error_bins_in_row = np.where(error_profile[:, j])[0]
+                if len(error_bins_in_row) > 0:
+                    cur_loci = error_bins_in_row.max()
+                else:
+                    cur_loci = 0
+
+                global_loci = cur_loci
+                error_profile[:global_loci + 1, j] = True
+
         
         return error_profile
 
